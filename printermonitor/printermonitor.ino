@@ -59,13 +59,15 @@ void drawOtaProgress(unsigned int, unsigned int);
 void drawScreen1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawScreen2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawScreen3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void drawScreen4(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void drawScreen5(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
 void drawClock(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawWeather(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawClockHeaderOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
 
 // Set the number of Frames supported
-const int numberOfFrames = 3;
+const int numberOfFrames = 5;
 FrameCallback frames[numberOfFrames];
 FrameCallback clockFrame[2];
 boolean isClockOn = false;
@@ -256,9 +258,12 @@ void setup() {
   ui.setTargetFPS(30);
   ui.disableAllIndicators();
   ui.setFrames(frames, (numberOfFrames));
-  frames[0] = drawScreen1;
-  frames[1] = drawScreen2;
-  frames[2] = drawScreen3;
+  //frames[0] = drawScreen1;
+  frames[0] = drawScreen2;
+  frames[1] = drawScreen3;
+  frames[2] = drawScreen4;
+  frames[3] = drawScreen5;
+  frames[4] = drawScreen6;
   clockFrame[0] = drawClock;
   clockFrame[1] = drawWeather;
   ui.setOverlays(overlays, numberOfOverlays);
@@ -381,6 +386,7 @@ void loop() {
     lastMinute = timeClient.getMinutes(); // reset the check value
     printerClient.getPrinterJobResults();
     printerClient.getPrinterPsuState();
+    printerClient.getLayerProgressResults();
     ledOnOff(false);
   } else if (printerClient.isPrinting()) {
     if (lastSecond != timeClient.getSeconds() && timeClient.getSeconds().endsWith("0")) {
@@ -389,6 +395,7 @@ void loop() {
       ledOnOff(true);
       printerClient.getPrinterJobResults();
       printerClient.getPrinterPsuState();
+      printerClient.getLayerProgressResults();
       ledOnOff(false);
     }
   }
@@ -961,6 +968,45 @@ void drawScreen3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int
 
   String time = zeroPad(hours) + ":" + zeroPad(minutes) + ":" + zeroPad(seconds);
   display->drawString(64 + x, 14 + y, time);
+}
+
+void drawScreen4(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_CENTER);
+  display->setFont(ArialMT_Plain_16);
+
+  display->drawString(64 + x, 0 + y, "Layer Progress");
+  //display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_24);
+  String current = printerClient.getCurrentLayer();
+  String total = printerClient.getTotalLayers();
+
+  String layerProgress = current + " / " + total;
+  display->drawString(64 + x, 14 + y, layerProgress);
+}
+
+void drawScreen5(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_CENTER);
+  display->setFont(ArialMT_Plain_16);
+
+  display->drawString(64 + x, 0 + y, "Height Progress");
+  //display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_24);
+  String current = printerClient.getCurrentHeight();
+  String total = printerClient.getTotalHeight();
+
+  String heightProgress = current + " / " + total;
+  display->drawString(64 + x, 14 + y, heightProgress);
+}
+
+void drawScreen6(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_CENTER);
+  display->setFont(ArialMT_Plain_16);
+
+  display->drawString(64 + x, 0 + y, "ETA");
+  //display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_24);
+  String eta = printerClient.getEstimatedEndTime();
+  display->drawString(64 + x, 14 + y, eta);
 }
 
 void drawClock(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {

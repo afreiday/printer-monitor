@@ -173,6 +173,35 @@ WiFiClient OctoPrintClient::getPostRequest(String apiPostData, String apiPostBod
   return printClient;
 }
 
+void OctoPrintClient::getLayerProgressResults() {
+  if (!validate()) {
+    return;
+  }
+  //**** get the Printer Job status
+  String apiGetData = "GET /plugin/DisplayLayerProgress/values HTTP/1.1";
+  WiFiClient printClient = getSubmitRequest(apiGetData);
+  if (printerData.error != "") {
+    return;
+  }
+  const size_t bufferSize = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + 710;
+  DynamicJsonBuffer jsonBuffer(bufferSize);
+
+  // Parse JSON object
+  JsonObject& root = jsonBuffer.parseObject(printClient);
+  if (!root.success()) {
+    Serial.println("OctoPrint Data Parsing failed: " + String(myServer) + ":" + String(myPort));
+    printerData.error = "OctoPrint Data Parsing failed: " + String(myServer) + ":" + String(myPort);
+    printerData.state = "";
+    return;
+  }
+
+  printerData.layerCurrent = (const char*)root["layer"]["current"];
+  printerData.layerTotal = (const char*)root["layer"]["total"];
+  printerData.heightCurrent = (const char*)root["height"]["currentFormatted"];
+  printerData.heightTotal = (const char*)root["height"]["totalFormatted"];
+  printerData.estimatedEndTime = (const char*)root["print"]["estimatedEndTime"];
+}
+
 void OctoPrintClient::getPrinterJobResults() {
   if (!validate()) {
     return;
@@ -305,6 +334,10 @@ void OctoPrintClient::resetPrintData() {
   printerData.isPrinting = false;
   printerData.isPSUoff = false;
   printerData.error = "";
+  printerData.layerCurrent = "";
+  printerData.layerTotal = "";
+  printerData.heightCurrent = "";
+  printerData.heightTotal = "";
 }
 
 String OctoPrintClient::getAveragePrintTime(){
@@ -412,3 +445,24 @@ String OctoPrintClient::getPrinterName() {
 void OctoPrintClient::setPrinterName(String printer) {
   printerData.printerName = printer;
 }
+
+String OctoPrintClient::getCurrentLayer() {
+  return printerData.layerCurrent;
+}
+
+String OctoPrintClient::getTotalLayers() {
+  return printerData.layerTotal;
+}
+
+String OctoPrintClient::getCurrentHeight() {
+  return printerData.heightCurrent;
+}
+
+String OctoPrintClient::getTotalHeight() {
+  return printerData.heightTotal;
+}
+
+String OctoPrintClient::getEstimatedEndTime() {
+  return printerData.estimatedEndTime;
+}
+

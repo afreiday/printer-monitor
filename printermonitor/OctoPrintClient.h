@@ -66,6 +66,12 @@ private:
     boolean isPSUoff;
     String error;
     String printerName;
+    // Layer
+    String layerCurrent;
+    String layerTotal;
+    String heightCurrent;
+    String heightTotal;
+    String estimatedEndTime;
   } PrinterStruct;
 
   PrinterStruct printerData;
@@ -74,6 +80,7 @@ private:
 public:
   OctoPrintClient(String ApiKey, String server, int port, String user, String pass, boolean psu);
   void getPrinterJobResults();
+  void getLayerProgressResults();
   void getPrinterPsuState();
   void updatePrintClient(String ApiKey, String server, int port, String user, String pass, boolean psu);
 
@@ -101,4 +108,9 @@ public:
   int getPrinterPort();
   String getPrinterName();
   void setPrinterName(String printer);
+  String getCurrentLayer();
+  String getTotalLayers();
+  String getCurrentHeight();
+  String getTotalHeight();
+  String getEstimatedEndTime();
 };
